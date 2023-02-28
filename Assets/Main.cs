@@ -9,50 +9,33 @@ public class Main : MonoBehaviour
     [SerializeField] GameObject electron;
     [SerializeField] Transform folder;
     [SerializeField] GameObject camera;
-    [SerializeField] double a = 100.0, L = 30.0, x = 0.0, time = 0.0, tmax = 1.0, tau = 0.0001, h = 5, e = 300, A = 5, r;
-    [SerializeField] int n;
-    [SerializeField] double[,,] u, un;
-
-    double phi(double A, double x, double L)
-    {
-        return A * x / L;
-    }
-
-    double psi1 = 0;
-
-    double psi2(double A, double e, double time)
-    {
-        return A * Math.Pow(e, -time);
-    }
+    [SerializeField] double L = 10.0, H = 0.1, TAU = 0.001, time = 0.0 ,tmax = 10.0, T = 100, ALPHA = 0.6, r;
+    [SerializeField] int N;
+    [SerializeField] double[,,] cube, cubeNew;
 
     void Start()
     {
-        n = (int)(L / h) + 1;
-        GameObject cam = Instantiate(camera, new Vector3(n / 2 + 1 / (n), n / 2, -n * 2), new Quaternion(0, 0, 0, 0));
-        cam.GetComponent<Camera>().orthographicSize = n;
+        N = (int)(L / H) + 1;
+        GameObject cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
+        cam.GetComponent<Camera>().orthographicSize = N;
 
-        r = a * tau / (h * h); //Постоянный коэффициент
+        r = TAU * ALPHA * ALPHA / (H * H); //Постоянный коэффициент
 
-        u = new double[n, n, n];
-        un = new double[n, n, n];
+        cube = new double[N, N, N];
+        cubeNew = new double[N, N, N];
 
-        u[0, 0, 0] = psi1; //Начальное значение в левой краевой точке
-        x += h; //Шаг по координате
-
-        for (int i = 1; i < n - 1; i++) //Задаем начальные значения
-        {
-            for (int j = 0; j < n - 1; j++)
+        //граница 1 - ГУ второго рода
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
             {
-                for (int k = 0; k < n - 1; k++)
-                {
-                    u[i, j, k] = phi(A, x, L);
-                }
+                cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
+                cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
+                cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
+                cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
+                cubeNew[0, i, j] = cube[1, i, j]; // граница 6
+                cubeNew[i, j, 0] = T; // граница 4
+
             }
-
-            x += h;
-        }
-
-        u[n - 1, n - 1, n - 1] = psi2(A, e, time); //Начальное значение в правой краевой точке
     }
 
     void Update ()
@@ -63,60 +46,62 @@ public class Main : MonoBehaviour
             Destroy(folder.transform.GetChild(i).gameObject);
         }
 
-        do
+        for (double time = 0; time < tmax; time += TAU)
         {
-            for (int i = 1; i < n - 1; i++) //Вычисляем новые значения в точках
-            {
-                for (int j = 1; j < n - 1; j++)
-                {
-                    for (int k = 1; k < n - 1; k++)
-                    {
-                        un[i, j, k] = u[i, j, k] + r * (u[i + 1, j, k] + u[i - 1, j, k] + u[i, j + 1, k] + u[i, j - 1, k] + u[i, j, k + 1] + u[i, j, k - 1] - 6 * u[i, j, k]);
-                    }
-                }
-            }
-            for (int i = 1; i < n - 1; i++) //Переприсваиваем новые значения в массив u
-            {
-                for (int j = 1; j < n - 1; j++)
-                {
-                    for (int k = 1; k < n - 1; k++)
-                    {
-                        u[i, j, k] = un[i, j , k];
-                    }
-                }
-            }
-            time += tau; //Шаг по времени
-            u[0, 0, 0] = psi1;
-            u[n - 1, n - 1, n - 1] = psi2(A, e, time);
 
-        } while (time <= tmax);
+            for (int i = 0; i < N; i++)
+                for (int j = 0; j < N; j++)
+                {
+                    cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
+                    cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
+                    cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
+                    cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
+                    cubeNew[0, i, j] = cube[1, i, j]; // граница 6
+                    cubeNew[i, j, 0] = T; // граница 4
 
-        for (int i = 0; i < n; i++)
+                }
+
+            //основные вычисления
+            for (int i = 1; i < N - 1; i++)
+                for (int j = 1; j < N - 1; j++)
+                    for (int k = 1; k < N - 1; k++)
+                    {
+                        cubeNew[i, j, k] = cube[i, j, k] + r * (cube[i + 1, j, k] + cube[i - 1, j, k] + cube[i, j + 1, k] + cube[i, j - 1, k] +
+                            cube[i, j, k + 1] + cube[i, j, k - 1] - 6 * cube[i, j, k]);
+                    }
+
+            //переприсваивание 
+            for (int i = 0; i < N; i++)
+                for (int j = 0; j < N; j++)
+                    for (int k = 0; k < N; k++)
+                        cube[i, j, k] = cubeNew[i, j, k];
+        }
+
+        for (int i = 0; i < N; i++)//округляю значения чтоб покрасивше было
         {
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < N; j++)
             {
-                for (int k = 0; k < n; k++)
+                for (int k = 0; k < N; k++)
                 {
-                    Debug.Log(Math.Round(u[i, j, k], 5));
+                    cube[i, j, k] = Math.Round(cube[i, j, k], 5);
                 }
             }
         }
 
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < N; i++)
         {
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < N; j++)
             {
-                for (int k = 0; k < n; k++)
+                for (int k = 0; k < N; k++)
                 {
                     GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
                     elect.transform.SetParent(folder);
-                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(u[i, j, k]), 0, 0);
-                    //elect.GetComponent<MeshRenderer>().material.color = new Color((float)Math.Cos((u[i, j, k] / 15) / 255f), (float)Math.Cos((u[i, j, k] / 5) / 255f), (float)Math.Cos((u[i, j, k] / 5) / 255f), 5f);
-                    elect.name = Convert.ToString(u[i, j, k]);
+                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k]/100), 0, 0);
+                    elect.name = Convert.ToString(cube[i, j, k]);
                 }
             }
         }
 
-        folder.transform.Rotate(new Vector3(-20, 45, -20));
+        folder.transform.Rotate(new Vector3(-110, 0, 45));
     }
 }
