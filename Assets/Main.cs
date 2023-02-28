@@ -9,7 +9,9 @@ public class Main : MonoBehaviour
     [SerializeField] GameObject electron;
     [SerializeField] Transform folder;
     [SerializeField] GameObject camera;
-    [SerializeField] double a = 100.0, L = 70.0, x = 0.0, time = 0.0, tmax = 1.0, tau = 0.0001, h = 5, e = 300, A = 5;
+    [SerializeField] double a = 100.0, L = 30.0, x = 0.0, time = 0.0, tmax = 1.0, tau = 0.0001, h = 5, e = 300, A = 5, r;
+    [SerializeField] int n;
+    [SerializeField] double[,,] u, un;
 
     double phi(double A, double x, double L)
     {
@@ -25,27 +27,16 @@ public class Main : MonoBehaviour
 
     void Start()
     {
-        int n = (int)(L / h) + 1;
+        n = (int)(L / h) + 1;
         GameObject cam = Instantiate(camera, new Vector3(n / 2 + 1 / (n), n / 2, -n * 2), new Quaternion(0, 0, 0, 0));
         cam.GetComponent<Camera>().orthographicSize = n;
-    }
 
-    // Update is called once per frame
-    void Update ()
-    {
+        r = a * tau / (h * h); //Постоянный коэффициент
 
-        for (int i = 0; i < folder.transform.childCount; i++)
-        {
-            Destroy(folder.transform.GetChild(i).gameObject);
-        }
+        u = new double[n, n, n];
+        un = new double[n, n, n];
 
-        //Объявление начальных значений
-        int n = (int)(L / h) + 1;
-        double r = a * tau / (h * h); //Постоянный коэффициент
-
-        double[,,] u = new double[n, n, n];
-        double[,,] un = new double[n, n, n];
-        u[0,0,0] = psi1; //Начальное значение в левой краевой точке
+        u[0, 0, 0] = psi1; //Начальное значение в левой краевой точке
         x += h; //Шаг по координате
 
         for (int i = 1; i < n - 1; i++) //Задаем начальные значения
@@ -62,6 +53,15 @@ public class Main : MonoBehaviour
         }
 
         u[n - 1, n - 1, n - 1] = psi2(A, e, time); //Начальное значение в правой краевой точке
+    }
+
+    void Update ()
+    {
+
+        for (int i = 0; i < folder.transform.childCount; i++)
+        {
+            Destroy(folder.transform.GetChild(i).gameObject);
+        }
 
         do
         {
