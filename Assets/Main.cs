@@ -3,15 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEditor;
 
 public class Main : MonoBehaviour
 {
     [SerializeField] GameObject electron;
     [SerializeField] Transform folder;
-    [SerializeField] GameObject camera;
-    [SerializeField] double L = 10.0, H = 0.1, TAU = 0.001, time = 0.0 ,tmax = 10.0, T = 100, ALPHA = 0.6, r;
+    [SerializeField] new GameObject camera;
+    [SerializeField] double L = 10.0, H = 0.1, TAU = 0.001,tmax = 10.0, T = 100, ALPHA = 0.6, r,timeStart, timeEnd;
     [SerializeField] int N;
     [SerializeField] double[,,] cube, cubeNew;
+    [SerializeField] GameObject lastSphere;
+    [SerializeField] bool end = false;
 
     void Start()
     {
@@ -36,6 +39,22 @@ public class Main : MonoBehaviour
                 cubeNew[i, j, 0] = T; // граница 4
 
             }
+
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                for (int k = 0; k < N; k++)
+                {
+                    GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
+                    elect.transform.SetParent(folder);
+                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
+                    elect.name = Convert.ToString(cube[i, j, k]);
+                }
+            }
+        }
+
+        timeStart = Time.time;
     }
 
     void Update ()
@@ -103,6 +122,15 @@ public class Main : MonoBehaviour
             }
         }
 
+        lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
         folder.transform.Rotate(new Vector3(-110, 0, 45));
+        
+        if (Convert.ToDouble(lastSphere.name) > 99 && !end)
+        {
+            timeEnd = Time.time;
+            Debug.Log(Math.Round(timeEnd - timeStart, 5));
+            Debug.Log("Нагрелось");
+            end = true;
+        }
     }
 }

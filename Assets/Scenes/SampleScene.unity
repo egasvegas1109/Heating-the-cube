@@ -264,12 +264,12 @@ MonoBehaviour:
   electron: {fileID: 7854292530322839006, guid: 57202f31fd2de4ed895e94885d9e6405, type: 3}
   folder: {fileID: 444335191}
   camera: {fileID: 7661551969065218634, guid: 490ba5730393d42f8851034f3e0995f0, type: 3}
-  L: 20
+  L: 10
   H: 2
   TAU: 0.001
-  time: 0
   tmax: 1
   T: 100
   ALPHA: 0.6
   r: 0
   N: 0
+  lastSphere: {fileID: 0}
