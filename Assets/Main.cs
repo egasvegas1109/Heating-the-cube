@@ -40,6 +40,7 @@ public class Main : MonoBehaviour
 
     void Update ()
     {
+        N = (int)(L / H) + 1;
 
         for (int i = 0; i < folder.transform.childCount; i++)
         {
