@@ -5,6 +5,8 @@ using System.IO;
 using UnityEngine;
 using UnityEditor;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 public class Main : MonoBehaviour
 {
@@ -13,13 +15,24 @@ public class Main : MonoBehaviour
     [SerializeField] new GameObject camera;
     [SerializeField] double L = 10.0, H = 0.1, TAU = 0.001, tmax = 10.0, T = 100, ALPHA = 0.6, r, timeStart, timeEnd;
     [SerializeField] int N;
-    [SerializeField] double[,,] cube, cubeNew;
+    [SerializeField] public double[,,] cube, cubeNew;
     [SerializeField] GameObject lastSphere;
     [SerializeField] bool end = false;
 
     void Start()
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        //Calculate();
+        CalculateParallel();
+        stopwatch.Stop();
+        Debug.Log("Time = " + stopwatch.ElapsedMilliseconds);
+    }
+
+    void Calculate()
+    {
         N = (int)(L / H) + 1;
+
         GameObject cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
         cam.GetComponent<Camera>().orthographicSize = N;
 
@@ -28,7 +41,6 @@ public class Main : MonoBehaviour
         cube = new double[N, N, N];
         cubeNew = new double[N, N, N];
 
-        //граница 1 - ГУ второго рода
         for (int i = 0; i < N; i++)
             for (int j = 0; j < N; j++)
             {
@@ -40,32 +52,6 @@ public class Main : MonoBehaviour
                 cubeNew[i, j, 0] = T; // граница 4
 
             }
-
-        for (int i = 0; i < N; i++)
-        {
-            for (int j = 0; j < N; j++)
-            {
-                for (int k = 0; k < N; k++)
-                {
-                    GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
-                    elect.transform.SetParent(folder);
-                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
-                    elect.name = Convert.ToString(cube[i, j, k]);
-                }
-            }
-        }
-
-        timeStart = Time.time;
-    }
-
-    void Calculate()
-    {
-        N = (int)(L / H) + 1;
-
-        for (int i = 0; i < folder.transform.childCount; i++)
-        {
-            Destroy(folder.transform.GetChild(i).gameObject);
-        }
 
         for (double time = 0; time < tmax; time += TAU)
         {
@@ -125,14 +111,13 @@ public class Main : MonoBehaviour
             }
         }
 
-        lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
+        lastSphere = folder.transform.GetChild(cube.Length - 1).gameObject;
         folder.transform.Rotate(new Vector3(-110, 0, 45));
 
         if (Convert.ToDouble(lastSphere.name) > 99 && !end)
         {
-            timeEnd = Time.time;
-            Debug.Log(Math.Round(timeEnd - timeStart, 5));
             Debug.Log("Нагрелось");
+            Debug.Log("Количество просчитанных точек = " + cube.Length);
             end = true;
         }
     }
@@ -141,10 +126,25 @@ public class Main : MonoBehaviour
     {
         N = (int)(L / H) + 1;
 
-        for (int i = 0; i < folder.transform.childCount; i++)
-        {
-            Destroy(folder.transform.GetChild(i).gameObject);
-        }
+        GameObject cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
+        cam.GetComponent<Camera>().orthographicSize = N;
+
+        r = TAU * ALPHA * ALPHA / (H * H); //Постоянный коэффициент
+
+        cube = new double[N, N, N];
+        cubeNew = new double[N, N, N];
+
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+            {
+                cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
+                cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
+                cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
+                cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
+                cubeNew[0, i, j] = cube[1, i, j]; // граница 6
+                cubeNew[i, j, 0] = T; // граница 4
+
+            }
 
         for (double time = 0; time < tmax; time += TAU)
         {
@@ -206,21 +206,14 @@ public class Main : MonoBehaviour
             }
         }
 
-        lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
+        lastSphere = folder.transform.GetChild(cube.Length - 1).gameObject;
         folder.transform.Rotate(new Vector3(-110, 0, 45));
 
         if (Convert.ToDouble(lastSphere.name) > 99 && !end)
         {
-            timeEnd = Time.time;
-            Debug.Log(Math.Round(timeEnd - timeStart, 5));
             Debug.Log("Нагрелось");
+            Debug.Log("Количество просчитанных точек = " + cube.Length);
             end = true;
         }
-    }
-
-    void Update()
-    {
-        Calculate();
-        //CalculateParallel();
     }
 }
