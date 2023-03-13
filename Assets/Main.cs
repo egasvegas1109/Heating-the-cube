@@ -138,86 +138,86 @@ public class Main : MonoBehaviour
         }
     }
 
-    void CalculateParallel()
-    {
-        N = (int)(L / H) + 1;
+    //void CalculateParallel()
+    //{
+    //    N = (int)(L / H) + 1;
 
-        for (int i = 0; i < folder.transform.childCount; i++)
-        {
-            Destroy(folder.transform.GetChild(i).gameObject);
-        }
+    //    for (int i = 0; i < folder.transform.childCount; i++)
+    //    {
+    //        Destroy(folder.transform.GetChild(i).gameObject);
+    //    }
 
-        for (double time = 0; time < tmax; time += TAU)
-        {
+    //    for (double time = 0; time < tmax; time += TAU)
+    //    {
 
-            for (int i = 0; i < N; i++)
-                for (int j = 0; j < N; j++)
-                {
-                    cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
-                    cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
-                    cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
-                    cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
-                    cubeNew[0, i, j] = cube[1, i, j]; // граница 6
-                    cubeNew[i, j, 0] = T; // граница 4
+    //        for (int i = 0; i < N; i++)
+    //            for (int j = 0; j < N; j++)
+    //            {
+    //                cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
+    //                cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
+    //                cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
+    //                cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
+    //                cubeNew[0, i, j] = cube[1, i, j]; // граница 6
+    //                cubeNew[i, j, 0] = T; // граница 4
 
-                }
+    //            }
 
-            //основные вычисления
+    //        //основные вычисления
 
-            Parallel.For(1, N - 1, i =>
-            {
-                for (int j = 1; j < N - 1; j++)
-                    for (int k = 1; k < N - 1; k++)
-                    {
-                        cubeNew[i, j, k] = cube[i, j, k] + r * (cube[i + 1, j, k] + cube[i - 1, j, k] + cube[i, j + 1, k] + cube[i, j - 1, k] +
-                            cube[i, j, k + 1] + cube[i, j, k - 1] - 6 * cube[i, j, k]);
-                    }
-            });
+    //        Parallel.For(1, N - 1, i =>
+    //        {
+    //            for (int j = 1; j < N - 1; j++)
+    //                for (int k = 1; k < N - 1; k++)
+    //                {
+    //                    cubeNew[i, j, k] = cube[i, j, k] + r * (cube[i + 1, j, k] + cube[i - 1, j, k] + cube[i, j + 1, k] + cube[i, j - 1, k] +
+    //                        cube[i, j, k + 1] + cube[i, j, k - 1] - 6 * cube[i, j, k]);
+    //                }
+    //        });
 
 
-            //переприсваивание 
-            for (int i = 0; i < N; i++)
-                for (int j = 0; j < N; j++)
-                    for (int k = 0; k < N; k++)
-                        cube[i, j, k] = cubeNew[i, j, k];
-        }
+    //        //переприсваивание 
+    //        for (int i = 0; i < N; i++)
+    //            for (int j = 0; j < N; j++)
+    //                for (int k = 0; k < N; k++)
+    //                    cube[i, j, k] = cubeNew[i, j, k];
+    //    }
 
-        for (int i = 0; i < N; i++)//округляю значения чтоб покрасивше было
-        {
-            for (int j = 0; j < N; j++)
-            {
-                for (int k = 0; k < N; k++)
-                {
-                    cube[i, j, k] = Math.Round(cube[i, j, k], 5);
-                }
-            }
-        }
+    //    for (int i = 0; i < N; i++)//округляю значения чтоб покрасивше было
+    //    {
+    //        for (int j = 0; j < N; j++)
+    //        {
+    //            for (int k = 0; k < N; k++)
+    //            {
+    //                cube[i, j, k] = Math.Round(cube[i, j, k], 5);
+    //            }
+    //        }
+    //    }
 
-        for (int i = 0; i < N; i++)
-        {
-            for (int j = 0; j < N; j++)
-            {
-                for (int k = 0; k < N; k++)
-                {
-                    GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
-                    elect.transform.SetParent(folder);
-                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
-                    elect.name = Convert.ToString(cube[i, j, k]);
-                }
-            }
-        }
+    //    for (int i = 0; i < N; i++)
+    //    {
+    //        for (int j = 0; j < N; j++)
+    //        {
+    //            for (int k = 0; k < N; k++)
+    //            {
+    //                GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
+    //                elect.transform.SetParent(folder);
+    //                elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
+    //                elect.name = Convert.ToString(cube[i, j, k]);
+    //            }
+    //        }
+    //    }
 
-        lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
-        folder.transform.Rotate(new Vector3(-110, 0, 45));
+    //    lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
+    //    folder.transform.Rotate(new Vector3(-110, 0, 45));
 
-        if (Convert.ToDouble(lastSphere.name) > 99 && !end)
-        {
-            timeEnd = Time.time;
-            Debug.Log(Math.Round(timeEnd - timeStart, 5));
-            Debug.Log("Нагрелось");
-            end = true;
-        }
-    }
+    //    if (Convert.ToDouble(lastSphere.name) > 99 && !end)
+    //    {
+    //        timeEnd = Time.time;
+    //        Debug.Log(Math.Round(timeEnd - timeStart, 5));
+    //        Debug.Log("Нагрелось");
+    //        end = true;
+    //    }
+    //}
 
     void Update()
     {
