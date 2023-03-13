@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class CamSettings : MonoBehaviour
 {
     [SerializeField] Main cube;
-    [SerializeField] Camera camera;
+    [SerializeField] new Camera camera;
     [SerializeField] FreeFlyCamera cameraMove;
     [SerializeField] public Toggle toggleCameraP;
     [SerializeField] public Toggle toggleActiveM;
