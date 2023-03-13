@@ -11,6 +11,7 @@ public class Main : MonoBehaviour
     [SerializeField] GameObject electron;
     [SerializeField] Transform folder;
     [SerializeField] new GameObject camera;
+    [SerializeField] public GameObject cam;
     [SerializeField] double L = 10.0, H = 0.1, TAU = 0.001, tmax = 10.0, T = 100, ALPHA = 0.6, r, timeStart, timeEnd;
     [SerializeField] int N;
     [SerializeField] double[,,] cube, cubeNew;
@@ -20,7 +21,7 @@ public class Main : MonoBehaviour
     void Start()
     {
         N = (int)(L / H) + 1;
-        GameObject cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
+        cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
         cam.GetComponent<Camera>().orthographicSize = N;
 
         r = TAU * ALPHA * ALPHA / (H * H); //Постоянный коэффициент
