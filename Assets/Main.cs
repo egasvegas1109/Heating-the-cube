@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEditor;
 using System.Threading.Tasks;
+using UnityEngine.UI;
 
 public class Main : MonoBehaviour
 {
@@ -17,55 +18,89 @@ public class Main : MonoBehaviour
     [SerializeField] double[,,] cube, cubeNew;
     [SerializeField] GameObject lastSphere;
     [SerializeField] bool end = false;
+    [SerializeField] bool once = true;
+    [SerializeField] bool start = false;
 
-    void Start()
+    [SerializeField] InputField inputL, inputH, inputTAU, inputTmax, inputT, inputALPHA;
+
+    private void Start()
     {
-        N = (int)(L / H) + 1;
-        cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
-        cam.GetComponent<Camera>().orthographicSize = N;
-
-        r = TAU * ALPHA * ALPHA / (H * H); //Постоянный коэффициент
-
-        cube = new double[N, N, N];
-        cubeNew = new double[N, N, N];
-
-        //граница 1 - ГУ второго рода
-        for (int i = 0; i < N; i++)
-            for (int j = 0; j < N; j++)
-            {
-                cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
-                cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
-                cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
-                cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
-                cubeNew[0, i, j] = cube[1, i, j]; // граница 6
-                cubeNew[i, j, 0] = T; // граница 4
-
-            }
-
-        for (int i = 0; i < N; i++)
-        {
-            for (int j = 0; j < N; j++)
-            {
-                for (int k = 0; k < N; k++)
-                {
-                    GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
-                    elect.transform.SetParent(folder);
-                    elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
-                    elect.name = Convert.ToString(cube[i, j, k]);
-                }
-            }
-        }
-
-        timeStart = Time.time;
+        cam = Instantiate(camera, new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 0));
     }
 
     void Calculate()
     {
-        N = (int)(L / H) + 1;
+        if(once)
+        {
+            GameObject[] cams;
+
+            cams = GameObject.FindGameObjectsWithTag("MainCamera");
+
+            for (int i = 0; i < cams.Length; ++i)
+            {
+                Destroy(cams[i]);
+            }
+
+            L = Convert.ToInt32(inputL.text);
+            H = Convert.ToDouble(inputH.text);
+            TAU = Convert.ToDouble(inputTAU.text);
+            tmax = Convert.ToDouble(inputTmax.text);
+            ALPHA = Convert.ToDouble(inputALPHA.text);
+
+            Debug.Log("Выполнилось 1 раз");
+            N = (int)(L / H) + 1;
+            cam = Instantiate(camera, new Vector3(0, N / 2, -N * 2), new Quaternion(0, 0, 0, 0));
+            cam.GetComponent<Camera>().orthographicSize = N;
+
+            r = TAU * ALPHA * ALPHA / (H * H); //Постоянный коэффициент
+
+            cube = new double[N, N, N];
+            cubeNew = new double[N, N, N];
+
+            //граница 1 - ГУ второго рода
+            for (int i = 0; i < N; i++)
+                for (int j = 0; j < N; j++)
+                {
+                    cubeNew[i, 0, j] = cube[i, 1, j]; // граница 1
+                    cubeNew[i, j, N - 1] = cube[i, j, N - 2]; // граница 2
+                    cubeNew[i, N - 1, j] = cube[i, N - 2, j]; // граница 3
+                    cubeNew[N - 1, i, j] = cube[N - 2, i, j]; // граница 5
+                    cubeNew[0, i, j] = cube[1, i, j]; // граница 6
+                    cubeNew[i, j, 0] = T; // граница 4
+
+                }
+
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    for (int k = 0; k < N; k++)
+                    {
+                        GameObject elect = Instantiate(electron, new Vector3(i, j, k), new Quaternion(0, 0, 0, 0));
+                        elect.transform.SetParent(folder);
+                        elect.GetComponent<MeshRenderer>().material.color = new Color((float)(cube[i, j, k] / 100), 0, 0);
+                        elect.name = Convert.ToString(cube[i, j, k]);
+                    }
+                }
+            }
+
+            timeStart = Time.time;
+
+            once = false;
+        }
 
         for (int i = 0; i < folder.transform.childCount; i++)
         {
             Destroy(folder.transform.GetChild(i).gameObject);
+        }
+
+        T = Convert.ToDouble(inputT.text);
+
+        if(inputT.text == "")
+        {
+            Debug.Log("Пусто");
+            //T = 1;
+            //inputT.text = "1";
         }
 
         for (double time = 0; time < tmax; time += TAU)
@@ -129,7 +164,7 @@ public class Main : MonoBehaviour
         lastSphere = folder.transform.GetChild(cube.Length + cube.Length - 1).gameObject;
         folder.transform.Rotate(new Vector3(-110, 0, 45));
 
-        if (Convert.ToDouble(lastSphere.name) > 99 && !end)
+        if (Convert.ToDouble(lastSphere.name) > T-1 && !end)
         {
             timeEnd = Time.time;
             Debug.Log(Math.Round(timeEnd - timeStart, 5));
@@ -221,7 +256,31 @@ public class Main : MonoBehaviour
 
     void Update()
     {
-        Calculate();
-        //CalculateParallel();
+        if(start)
+        {
+            Calculate();
+            //CalculateParallel();
+        }
     }
+
+    public void StartBTN()
+    {
+        Debug.Log("Start");
+        start = true;
+    }
+
+    public void StopBTN()
+    {
+        Debug.Log("Stop");
+        start = false;
+    }
+
+    public void RestartBTN()
+    {
+        Debug.Log("Restart");
+        start = true;
+        once = true;
+        end = false;
+    }
+
 }
