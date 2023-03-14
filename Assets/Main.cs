@@ -94,14 +94,17 @@ public class Main : MonoBehaviour
             Destroy(folder.transform.GetChild(i).gameObject);
         }
 
-        T = Convert.ToDouble(inputT.text);
+        if (inputT.text != "")
+            T = Convert.ToDouble(inputT.text);
+        else
+            Debug.Log("Pusto");
 
-        if(inputT.text == "")
-        {
-            Debug.Log("Пусто");
-            //T = 1;
-            //inputT.text = "1";
-        }
+        //if(inputT.text == "")
+        //{
+        //    Debug.Log("Пусто");
+        //    //T = 1;
+        //    //inputT.text = "1";
+        //}
 
         for (double time = 0; time < tmax; time += TAU)
         {
